@@ -9,13 +9,23 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 4001;
 
-app.use(
-  cors({
-    origin: "https://red-mud-0cb8e9600.5.azurestaticapps.net",
-    methods: "GET,POST,PUT,DELETE",
-    allowedHeaders: "Content-Type",
-  })
-);
+const allowedOrigins = [
+  "https://red-mud-0cb8e9600.5.azurestaticapps.net",
+  "http://localhost:5173",
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Configure multer for file uploads
