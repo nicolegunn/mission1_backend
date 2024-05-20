@@ -24,7 +24,13 @@ const pool = mysql.createPool({
   ssl: { ca: fs.readFileSync("./DigiCertGlobalRootCA.crt.pem") },
 });
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://red-mud-0cb8e9600.5.azurestaticapps.net/",
+    methods: "GET,POST,PUT,DELETE",
+    allowedHeaders: "Content-Type",
+  })
+);
 app.use(express.json());
 
 app.post("/upload", upload.single("image"), async (req, res) => {
