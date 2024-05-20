@@ -9,6 +9,15 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 4001;
 
+app.use(
+  cors({
+    origin: "https://red-mud-0cb8e9600.5.azurestaticapps.net",
+    methods: "GET,POST,PUT,DELETE",
+    allowedHeaders: "Content-Type",
+  })
+);
+app.use(express.json());
+
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
@@ -23,15 +32,6 @@ const pool = mysql.createPool({
   queueLimit: 0,
   ssl: { ca: fs.readFileSync("./DigiCertGlobalRootCA.crt.pem") },
 });
-
-app.use(
-  cors({
-    origin: "https://red-mud-0cb8e9600.5.azurestaticapps.net/",
-    methods: "GET,POST,PUT,DELETE",
-    allowedHeaders: "Content-Type",
-  })
-);
-app.use(express.json());
 
 app.post("/upload", upload.single("image"), async (req, res) => {
   try {
