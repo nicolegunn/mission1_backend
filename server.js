@@ -48,36 +48,33 @@ app.post("/upload", upload.single("image"), async (req, res) => {
     // Log the incoming file details
     console.log("Received file:", req.file);
 
-    // Call Azure to get car body type
-    const bodyTypeResponse = await axios.post(
-      `${process.env.VISION_ENDPOINT}${process.env.BODY_TYPE_PROJECT_ID}/classify/iterations/body_type/image`,
-      req.file.buffer,
-      {
-        headers: {
-          "Content-Type": "application/octet-stream",
-          "Prediction-Key": process.env.PREDICTION_KEY,
-        },
-      }
-    );
+    // Call Azure to get car body type and car make concurrently
+    const [bodyTypeResponse, carMakeResponse] = await Promise.all([
+      axios.post(
+        `${process.env.VISION_ENDPOINT}${process.env.BODY_TYPE_PROJECT_ID}/classify/iterations/body_type/image`,
+        req.file.buffer,
+        {
+          headers: {
+            "Content-Type": "application/octet-stream",
+            "Prediction-Key": process.env.PREDICTION_KEY,
+          },
+        }
+      ),
+      axios.post(
+        `${process.env.VISION_ENDPOINT}${process.env.MAKE_PROJECT_ID}/classify/iterations/make/image`,
+        req.file.buffer,
+        {
+          headers: {
+            "Content-Type": "application/octet-stream",
+            "Prediction-Key": process.env.PREDICTION_KEY,
+          },
+        }
+      ),
+    ]);
 
     const bodyType = bodyTypeResponse.data.predictions[0].tagName;
     const bodyTypeConfidence = Math.round(
       bodyTypeResponse.data.predictions[0].probability * 100
-    );
-
-    // Log the response for debugging
-    console.log("Body type response:", bodyType);
-
-    // Call Azure to get car make
-    const carMakeResponse = await axios.post(
-      `${process.env.VISION_ENDPOINT}${process.env.MAKE_PROJECT_ID}/classify/iterations/make/image`,
-      req.file.buffer,
-      {
-        headers: {
-          "Content-Type": "application/octet-stream",
-          "Prediction-Key": process.env.PREDICTION_KEY,
-        },
-      }
     );
 
     const carMake = carMakeResponse.data.predictions[0].tagName;
@@ -85,7 +82,8 @@ app.post("/upload", upload.single("image"), async (req, res) => {
       carMakeResponse.data.predictions[0].probability * 100
     );
 
-    // Log the response for debugging
+    // Log the responses for debugging
+    console.log("Body type response:", bodyType);
     console.log("Car make response:", carMake);
 
     // Combine the results from both requests
